@@ -1,0 +1,43 @@
+/* Banner Block - Simple Image with Hover Effect */
+
+.banner {
+    position: relative;
+    width: 100%;
+    overflow: hidden;
+    margin: 0;
+  }
+  
+  .banner-wrapper {
+    position: relative;
+    width: 100%;
+    height: auto;
+    transition: transform 0.3s ease;
+  }
+  
+  .banner-wrapper picture,
+  .banner-wrapper img {
+    width: 100%;
+    height: auto;
+    display: block;
+    transition: transform 0.5s ease, filter 0.3s ease;
+  }
+  
+  /* Hover Effect - Slight zoom and brightness */
+  .banner:hover .banner-wrapper picture,
+  .banner:hover .banner-wrapper img {
+    transform: scale(1.02);
+    filter: brightness(1.05);
+  }
+  
+  /* Optional: Add a subtle shadow on hover */
+  .banner:hover {
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  }
+  
+  /* Responsive - Maintain aspect ratio */
+  @media (max-width: 768px) {
+    .banner-wrapper picture,
+    .banner-wrapper img {
+      object-fit: cover;
+    }
+  }
