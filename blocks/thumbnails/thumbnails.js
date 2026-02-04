@@ -110,5 +110,5 @@ export default function decorate(block) {
       <div class="thumbnails-grid">
         ${thumbnailCards}
       </div>
-    `;
+    `;  
   }
