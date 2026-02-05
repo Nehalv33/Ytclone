@@ -23,7 +23,7 @@ function buildHeroBlock(main) {
   // eslint-disable-next-line no-bitwise
   if (h1 && picture && (h1.compareDocumentPosition(picture) & Node.DOCUMENT_POSITION_PRECEDING)) {
     if (h1.closest('.hero') || picture.closest('.hero')) {
-      return; 
+      return;
     }
     const section = document.createElement('div');
     section.append(buildBlock('hero', { elems: [picture, h1] }));
@@ -37,7 +37,9 @@ function buildHeroBlock(main) {
 async function loadFonts() {
   await loadCSS(`${window.hlx.codeBasePath}/styles/fonts.css`);
   try {
-    if (!window.location.hostname.includes('localhost')) sessionStorage.setItem('fonts-loaded', 'true');
+    if (!window.location.hostname.includes('localhost')) {
+      sessionStorage.setItem('fonts-loaded', 'true');
+    }
   } catch (e) {
     // do nothing
   }
@@ -49,7 +51,9 @@ async function loadFonts() {
  */
 function buildAutoBlocks(main) {
   try {
-    const fragments = [...main.querySelectorAll('a[href*="/fragments/"]')].filter((f) => !f.closest('.fragment'));
+    const fragments = [...main.querySelectorAll('a[href*="/fragments/"]')]
+      .filter((f) => !f.closest('.fragment'));
+    
     if (fragments.length > 0) {
       import('../blocks/fragment/fragment.js').then(({ loadFragment }) => {
         fragments.forEach(async (fragment) => {
@@ -90,8 +94,8 @@ async function loadEager(doc) {
   document.documentElement.lang = 'en';
   decorateTemplateAndTheme();
   
-  // CHANGED: Load header early so the VidTube logo doesn't cause layout shift
-  loadHeader(doc.querySelector('header'));
+  // Load header early to prevent layout shift
+  await loadHeader(doc.querySelector('header'));
 
   const main = doc.querySelector('main');
   if (main) {
@@ -114,8 +118,6 @@ async function loadEager(doc) {
  * @param {Element} doc The container element
  */
 async function loadLazy(doc) {
-  // CHANGED: Removed loadHeader from here as it is now in loadEager
-
   const main = doc.querySelector('main');
   await loadSections(main);
 
