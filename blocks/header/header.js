@@ -3,8 +3,6 @@ import { loadFragment } from '../fragment/fragment.js';
 
 /**
  * Returns the appropriate SVG icon based on the item name
- * @param {string} name The item name
- * @returns {string} SVG icon HTML
  */
 function getSidebarIcon(name) {
   const lowerName = name.toLowerCase();
@@ -56,11 +54,6 @@ function getSidebarIcon(name) {
   </svg>`;
 }
 
-/**
- * Creates a sidebar item
- * @param {Element} item The fragment item element
- * @returns {Element} The sidebar item element
- */
 function createSidebarItem(item) {
   const sidebarItem = document.createElement('a');
   sidebarItem.className = 'sidebar-item';
@@ -85,7 +78,6 @@ function createSidebarItem(item) {
   sidebarItem.appendChild(iconContainer);
   sidebarItem.appendChild(label);
   
-  // Mark active page
   if (link && window.location.pathname === new URL(link.href).pathname) {
     sidebarItem.classList.add('active');
   }
@@ -93,11 +85,6 @@ function createSidebarItem(item) {
   return sidebarItem;
 }
 
-/**
- * Creates the sidebar from fragment content
- * @param {Element} fragment The loaded fragment
- * @returns {Element} The sidebar element
- */
 function createSidebar(fragment) {
   const sidebar = document.createElement('aside');
   sidebar.className = 'sidebar';
@@ -170,9 +157,7 @@ function createSidebar(fragment) {
   return sidebar;
 }
 
-/**
- * Toggles the sidebar between full and mini mode
- */
+// --- SIDEBAR TOGGLE & PERSISTENCE ---
 function toggleSidebar() {
   const sidebar = document.querySelector('.sidebar');
   const hamburger = document.querySelector('.hamburger-menu');
@@ -181,29 +166,55 @@ function toggleSidebar() {
     const isMobile = window.innerWidth <= 1024;
     
     if (isMobile) {
-      // Mobile: toggle sidebar visibility
       sidebar.classList.toggle('mobile-open');
       document.body.classList.toggle('mobile-sidebar-open');
       hamburger.classList.toggle('active');
     } else {
-      // Desktop: toggle mini mode
       sidebar.classList.toggle('mini');
       hamburger.classList.toggle('active');
       
-      if (sidebar.classList.contains('mini')) {
+      const isMini = sidebar.classList.contains('mini');
+      if (isMini) {
         document.body.classList.remove('sidebar-full');
         document.body.classList.add('sidebar-mini');
+        localStorage.setItem('vidtube-sidebar-pref', 'mini');
       } else {
         document.body.classList.remove('sidebar-mini');
         document.body.classList.add('sidebar-full');
+        localStorage.setItem('vidtube-sidebar-pref', 'full');
       }
     }
   }
 }
 
-/**
- * Closes mobile sidebar when clicking outside
- */
+// --- DARK MODE LOGIC ---
+function updateDarkModeIcon(isDark) {
+  const btn = document.querySelector('.dark-mode-toggle');
+  if (btn) {
+    if (isDark) {
+      // Show SUN (click to switch to light)
+      btn.innerHTML = `<svg viewBox="0 0 24 24" fill="currentColor">
+        <path d="M12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zM2 13h2c.55 0 1-.45 1-1s-.45-1-1-1H2c-.55 0-1 .45-1 1s.45 1 1 1zm18 0h2c.55 0 1-.45 1-1s-.45-1-1-1h-2c-.55 0-1 .45-1 1s.45 1 1 1zM11 2v2c0 .55.45 1 1 1s1-.45 1-1V2c0-.55-.45-1-1-1s-1 .45-1 1zm0 18v2c0 .55.45 1 1 1s1-.45 1-1v-2c0-.55-.45-1-1-1s-1 .45-1 1zM5.99 4.58c-.39-.39-1.03-.39-1.41 0-.39.39-.39 1.03 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0s.39-1.03 0-1.41L5.99 4.58zm12.37 12.37c-.39-.39-1.03-.39-1.41 0-.39.39-.39 1.03 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0 .39-.39.39-1.03 0-1.41l-1.06-1.06zm1.06-10.96c.39-.39.39-1.03 0-1.41-.39-.39-1.03-.39-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06zM7.05 18.36c.39-.39.39-1.03 0-1.41-.39-.39-1.03-.39-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06z"/>
+      </svg>`;
+      btn.setAttribute('aria-label', 'Switch to Light Mode');
+    } else {
+      // Show MOON (click to switch to dark)
+      btn.innerHTML = `<svg viewBox="0 0 24 24" fill="currentColor">
+        <path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9c0-.46-.04-.92-.1-1.36-.98 1.37-2.58 2.26-4.4 2.26-2.98 0-5.4-2.42-5.4-5.4 0-1.81.89-3.42 2.26-4.4-.44-.06-.9-.1-1.36-.1z"/>
+      </svg>`;
+      btn.setAttribute('aria-label', 'Switch to Dark Mode');
+    }
+  }
+}
+
+function toggleDarkMode() {
+  const body = document.body;
+  const isDark = body.classList.toggle('dark-mode');
+  
+  localStorage.setItem('vidtube-dark-mode', isDark ? 'enabled' : 'disabled');
+  updateDarkModeIcon(isDark);
+}
+
 function setupMobileSidebarClose() {
   document.addEventListener('click', (e) => {
     if (window.innerWidth <= 1024) {
@@ -221,17 +232,51 @@ function setupMobileSidebarClose() {
   });
 }
 
-/**
- * Loads and decorates the header with navbar and sidebar
- * @param {Element} block The header block element
- */
+// --- LIVE SEARCH LOGIC ---
+function filterVideos(query) {
+  // Convert query to lowercase for case-insensitive matching
+  const lowerQuery = query.toLowerCase().trim();
+  
+  // Select all video cards on the page
+  const cards = document.querySelectorAll('.thumbnail-card');
+  const container = document.querySelector('.thumbnails-grid');
+  
+  if (!container) return; 
+
+  // Remove existing "No Results" message if it exists
+  const oldMsg = document.querySelector('.search-no-results');
+  if (oldMsg) oldMsg.remove();
+
+  let matchCount = 0;
+
+  // Loop through all cards to check for matches
+  cards.forEach(card => {
+    const title = card.querySelector('.thumbnail-title')?.textContent || '';
+    const channel = card.querySelector('.thumbnail-channel')?.textContent || '';
+    
+    // Check if title OR channel name contains the typed characters
+    if (title.toLowerCase().includes(lowerQuery) || channel.toLowerCase().includes(lowerQuery)) {
+      card.style.display = ''; // Show match
+      matchCount++;
+    } else {
+      card.style.display = 'none'; // Hide non-match
+    }
+  });
+
+  // If no cards match and the query isn't empty, show the alert
+  if (matchCount === 0 && lowerQuery.length > 0) {
+    const msg = document.createElement('div');
+    msg.className = 'search-no-results';
+    msg.textContent = 'No videos found for your search';
+    container.appendChild(msg);
+  }
+}
+
 export default async function decorate(block) {
-  // Load nav as fragment
   const navMeta = getMetadata('nav');
   const navPath = navMeta ? new URL(navMeta, window.location).pathname : '/nav';
   const navFragment = await loadFragment(navPath);
 
-  // Load sidebar as fragment
   const sidebarMeta = getMetadata('sidebar');
   const sidebarPath = sidebarMeta ? new URL(sidebarMeta, window.location).pathname : '/sidebar';
   const sidebarFragment = await loadFragment(sidebarPath);
@@ -239,7 +284,6 @@ export default async function decorate(block) {
   block.textContent = '';
 
   const fragmentContent = navFragment.querySelectorAll('p, div');
-  
   const logoElement = fragmentContent[0]?.querySelector('picture, img, a') || fragmentContent[0];
   
   let profileElement = null;
@@ -251,11 +295,10 @@ export default async function decorate(block) {
     }
   }
 
-  // Create navbar container
+  // --- NAVBAR ---
   const navbarContainer = document.createElement('div');
   navbarContainer.className = 'navbar-container';
 
-  // LEFT SECTION
   const navbarLeft = document.createElement('div');
   navbarLeft.className = 'navbar-left';
 
@@ -268,7 +311,6 @@ export default async function decorate(block) {
     <span class="hamburger-line"></span>
     <span class="hamburger-line"></span>
   `;
-  
   hamburger.addEventListener('click', toggleSidebar);
   navbarLeft.appendChild(hamburger);
 
@@ -282,10 +324,10 @@ export default async function decorate(block) {
   }
   navbarLeft.appendChild(logoLink);
 
-  // CENTER SECTION
   const navbarCenter = document.createElement('div');
   navbarCenter.className = 'navbar-center';
 
+  // --- SEARCH FORM ---
   const searchForm = document.createElement('form');
   searchForm.className = 'search-form';
   searchForm.setAttribute('role', 'search');
@@ -302,13 +344,18 @@ export default async function decorate(block) {
       </svg>
     </button>
   `;
-
+  
+  // 1. Submit Event (Prevent Reload on Enter)
   searchForm.addEventListener('submit', (e) => {
     e.preventDefault();
-    const query = searchForm.querySelector('.search-input').value;
-    if (query.trim()) {
-      window.location.href = `/search?q=${encodeURIComponent(query)}`;
-    }
+    // Valid input will already be filtered by the input event
+  });
+  
+  // 2. LIVE SEARCH EVENT LISTENER
+  // This triggers filterVideos() immediately as you type
+  const searchInput = searchForm.querySelector('.search-input');
+  searchInput.addEventListener('input', (e) => {
+    filterVideos(e.target.value);
   });
 
   navbarCenter.appendChild(searchForm);
@@ -323,12 +370,17 @@ export default async function decorate(block) {
       <path d="M17 12C17 14.76 14.76 17 12 17C9.24 17 7 14.76 7 12H5C5 15.53 7.61 18.43 11 18.92V22H13V18.92C16.39 18.43 19 15.53 19 12H17Z"/>
     </svg>
   `;
-
   navbarCenter.appendChild(voiceButton);
 
-  // RIGHT SECTION
   const navbarRight = document.createElement('div');
   navbarRight.className = 'navbar-right';
+
+  // --- DARK MODE BUTTON ---
+  const darkModeButton = document.createElement('button');
+  darkModeButton.className = 'dark-mode-toggle';
+  darkModeButton.setAttribute('type', 'button');
+  darkModeButton.addEventListener('click', toggleDarkMode);
+  navbarRight.appendChild(darkModeButton);
 
   const profileButton = document.createElement('button');
   profileButton.className = 'profile-button';
@@ -346,10 +398,8 @@ export default async function decorate(block) {
       </svg>
     `;
   }
-
   navbarRight.appendChild(profileButton);
 
-  // Assemble navbar
   navbarContainer.appendChild(navbarLeft);
   navbarContainer.appendChild(navbarCenter);
   navbarContainer.appendChild(navbarRight);
@@ -359,16 +409,30 @@ export default async function decorate(block) {
   nav.setAttribute('aria-label', 'Main navigation');
   nav.appendChild(navbarContainer);
 
-  // Create sidebar
   const sidebar = createSidebar(sidebarFragment);
 
-  // Assemble
   block.appendChild(nav);
   block.appendChild(sidebar);
 
-  // Set initial state
-  document.body.classList.add('sidebar-full');
+  // --- RESTORE STATES ---
+  if (window.innerWidth > 1024) {
+    const savedState = localStorage.getItem('vidtube-sidebar-pref');
+    if (savedState === 'mini') {
+      sidebar.classList.add('mini');
+      hamburger.classList.add('active');
+      document.body.classList.add('sidebar-mini');
+    } else {
+      document.body.classList.add('sidebar-full');
+    }
+  }
+
+  const savedTheme = localStorage.getItem('vidtube-dark-mode');
+  if (savedTheme === 'enabled') {
+    document.body.classList.add('dark-mode');
+    updateDarkModeIcon(true);
+  } else {
+    updateDarkModeIcon(false);
+  }
   
-  // Setup mobile sidebar close
   setupMobileSidebarClose();
 }
