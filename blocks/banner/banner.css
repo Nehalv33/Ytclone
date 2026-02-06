@@ -47,7 +47,7 @@
   
     border-radius: 12px; /* Smooth corners */
     overflow: hidden;    /* Clips the image to the corners */
-    background-color: transparent; /* Loading gray background */
+    background-color: #f3f3f3; /* Loading gray background */
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
   }
   
@@ -81,24 +81,44 @@
   
   /* Tablet */
   @media (max-width: 1024px) {
+    .banner-inner {
+      padding: 0; /* Remove side padding for full width */
+    }
+    
     .banner-wrapper {
-      aspect-ratio: 16 / 5; /* Slightly taller on tablets */
+      aspect-ratio: auto; /* Let height adjust naturally */
+      max-height: none;
+      min-height: auto;
+      border-radius: 0; /* Remove rounded corners for edge-to-edge look */
+    }
+    
+    .banner-wrapper picture,
+    .banner-wrapper img {
+      object-fit: contain; /* Show full image without cropping */
+      height: auto; /* Let image determine height */
     }
   }
   
   /* Mobile */
   @media (max-width: 768px) {
     .banner-outer {
-      padding-top: 16px; /* Less space from header */
+      padding-top: 12px; /* Less space from header */
     }
   
     .banner-inner {
-      padding: 0 16px; /* Less side padding */
+      padding: 0; /* Remove side padding for full width */
     }
   
     .banner-wrapper {
-      aspect-ratio: 16 / 6; /* Taller on mobile for visibility */
+      aspect-ratio: auto; /* Let height adjust naturally */
       max-height: none;
-      border-radius: 8px;   /* Smaller radius */
+      min-height: auto;
+      border-radius: 0; /* Remove rounded corners for edge-to-edge look */
+    }
+    
+    .banner-wrapper picture,
+    .banner-wrapper img {
+      object-fit: contain; /* Show full image without cropping */
+      height: auto; /* Let image determine height */
     }
   }

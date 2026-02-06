@@ -231,6 +231,30 @@
     justify-content: flex-end;
   }
   
+  /* Mobile Search Toggle (hidden on desktop) */
+  .mobile-search-toggle {
+    display: none;
+    width: 40px;
+    height: 40px;
+    border: none;
+    background: none;
+    cursor: pointer;
+    border-radius: 50%;
+    padding: 8px;
+    align-items: center;
+    justify-content: center;
+    color: #030303;
+  }
+  
+  .mobile-search-toggle:hover {
+    background-color: #f2f2f2;
+  }
+  
+  .mobile-search-toggle svg {
+    width: 24px;
+    height: 24px;
+  }
+  
   /* --- Dark Mode Toggle --- */
   .dark-mode-toggle {
     width: 40px;
@@ -311,7 +335,7 @@
     padding: 12px 0;
     margin: 0;
     box-sizing: border-box;
-    transition: width 0.2s ease, padding 0.2s ease;
+    transition: width 0.2s ease, padding 0.2s ease, transform 0.2s ease;
     border-right: 1px solid rgba(0, 0, 0, 0.1);
   }
   
@@ -404,7 +428,7 @@
   }
   
   /* ===================================
-     MINI SIDEBAR
+     MINI SIDEBAR (Desktop Only)
      =================================== */
   
   .sidebar.mini {
@@ -474,7 +498,7 @@
   }
   
   /* ===================================
-     RESPONSIVE
+     RESPONSIVE - TABLET
      =================================== */
   
   @media (max-width: 1312px) {
@@ -482,28 +506,258 @@
   }
   
   @media (max-width: 1024px) {
-    .sidebar { transform: translateX(-100%); }
-    .sidebar.mobile-open { transform: translateX(0); }
-    body.sidebar-full main, body.sidebar-mini main { margin-left: 0; width: 100%; }
+    /* Hide sidebar by default on tablet/mobile */
+    .sidebar {
+      transform: translateX(-100%);
+      width: 240px;
+    }
+    
+    /* Show sidebar when mobile-open class is added */
+    .sidebar.mobile-open {
+      transform: translateX(0);
+      box-shadow: 2px 0 5px rgba(0, 0, 0, 0.3);
+    }
+    
+    /* Force full sidebar style on mobile (never mini) */
+    .sidebar.mini {
+      width: 240px;
+    }
+    
+    .sidebar.mini .sidebar-section-title {
+      display: block;
+    }
+    
+    .sidebar.mini .sidebar-item {
+      justify-content: flex-start;
+      padding: 0 12px;
+      height: 40px;
+      margin: 0 8px;
+      gap: 24px;
+    }
+    
+    .sidebar.mini .sidebar-label {
+      display: block !important;
+    }
+    
+    /* Remove sidebar margins from main content */
+    body.sidebar-full main, 
+    body.sidebar-mini main {
+      margin-left: 0;
+      width: 100%;
+    }
+    
+    /* Add dark overlay when sidebar is open */
     body.mobile-sidebar-open::before {
       content: '';
       position: fixed;
-      top: 56px; left: 0; right: 0; bottom: 0;
+      top: 56px;
+      left: 0;
+      right: 0;
+      bottom: 0;
       background: rgba(0, 0, 0, 0.5);
       z-index: 2000;
     }
   }
   
-  @media (max-width: 900px) {
-    .navbar-container { padding: 0 8px; }
-    .navbar-left { gap: 2px; min-width: auto; }
-    .navbar-center { margin: 0 10px; }
-    .navbar-right { min-width: auto; }
-    .voice-search-button { display: none; }
-  }
+  /* ===================================
+     RESPONSIVE - MOBILE (< 768px)
+     =================================== */
   
   @media (max-width: 768px) {
-    .search-form { max-width: 100%; }
+    /* Navbar adjustments */
+    .navbar-container {
+      padding: 0 8px;
+      gap: 8px;
+    }
+    
+    .navbar-left {
+      gap: 2px;
+      min-width: auto;
+    }
+    
+    .navbar-logo {
+      padding: 18px 8px;
+    }
+    
+    /* HIDE search bar completely on mobile */
+    .navbar-center {
+      display: none;
+    }
+    
+    /* Show mobile search toggle button */
+    .mobile-search-toggle {
+      display: flex;
+      order: -1; /* Put it first in the navbar-right */
+    }
+    
+    .navbar-right {
+      min-width: auto;
+      gap: 6px;
+    }
+    
+    /* Keep dark mode toggle and profile visible */
+    .dark-mode-toggle,
+    .profile-button {
+      display: flex;
+    }
+    
+    /* Mobile search active state - fullscreen overlay */
+    .navbar-center.mobile-search-active {
+      display: flex !important;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 56px; /* Leave space for close button */
+      height: 56px;
+      background: #fff;
+      z-index: 2030;
+      margin: 0;
+      padding: 0 8px 0 16px;
+      max-width: none;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 1px 0 rgba(0, 0, 0, 0.1);
+    }
+    
+    /* Make search form take full width when active */
+    .navbar-center.mobile-search-active .search-form {
+      flex: 1;
+      max-width: none;
+    }
+    
+    /* Position close button on the right */
+    body:has(.navbar-center.mobile-search-active) .navbar-right {
+      position: fixed;
+      top: 0;
+      right: 0;
+      z-index: 2031;
+      background: #fff;
+      height: 56px;
+      padding: 0 8px;
+      display: flex;
+      align-items: center;
+    }
+    
+    /* Dark mode for mobile search overlay */
+    body.dark-mode .navbar-center.mobile-search-active {
+      background: #0f0f0f;
+      box-shadow: 0 1px 0 rgba(255, 255, 255, 0.1);
+    }
+    
+    body.dark-mode:has(.navbar-center.mobile-search-active) .navbar-right {
+      background: #0f0f0f;
+    }
+    
+    /* Make search form take full width when active */
+    .navbar-center.mobile-search-active .search-form {
+      flex: 1;
+      max-width: none;
+      height: 40px;
+    }
+    
+    .search-input {
+      font-size: 16px;
+      padding: 1px 4px 1px 16px;
+    }
+    
+    /* Hide voice search on mobile */
+    .voice-search-button {
+      display: none;
+    }
+    
+    /* Close button styles (the X icon when search is active) */
+    .mobile-search-toggle {
+      flex-shrink: 0;
+    }
+  }
+  
+  /* ===================================
+     RESPONSIVE - SMALL MOBILE (< 480px)
+     =================================== */
+  
+  @media (max-width: 480px) {
+    .navbar-container {
+      gap: 4px;
+    }
+    
+    .navbar-left {
+      gap: 0;
+    }
+    
+    .hamburger-menu {
+      margin-right: 4px;
+      width: 36px;
+      height: 36px;
+    }
+    
+    .navbar-logo {
+      font-size: 18px;
+      padding: 18px 4px;
+    }
+    
+    .navbar-logo picture,
+    .navbar-logo img {
+      height: 18px;
+    }
+    
+    /* Make search even more compact */
+    .navbar-center {
+      margin: 0 4px;
+      max-width: 200px; /* Further reduced for small screens */
+    }
+    
+    .search-form {
+      height: 36px;
+    }
+    
+    .search-input {
+      font-size: 14px;
+      padding: 1px 4px 1px 12px;
+      height: 34px;
+    }
+    
+    .search-button {
+      width: 48px;
+      height: 36px;
+    }
+    
+    .search-button svg {
+      width: 20px;
+      height: 20px;
+    }
+    
+    /* Compact right side icons */
+    .dark-mode-toggle {
+      width: 36px;
+      height: 36px;
+      padding: 6px;
+      margin-right: 2px;
+    }
+    
+    .dark-mode-toggle svg {
+      width: 20px;
+      height: 20px;
+    }
+    
+    .profile-button {
+      width: 28px;
+      height: 28px;
+      min-width: 28px;
+      min-height: 28px;
+    }
+    
+    .profile-button picture,
+    .profile-button img,
+    .profile-button svg {
+      width: 28px;
+      height: 28px;
+    }
+    
+    /* Mobile active search - adjust positioning for smaller screen */
+    .search-form.mobile-active {
+      left: 44px;
+      right: 80px;
+    }
   }
   
   /* ===================================
@@ -526,6 +780,8 @@
     .voice-search-button { background-color: #272727; }
     .voice-search-button:hover { background-color: #3f3f3f; }
     .voice-search-button svg { fill: #f1f1f1; }
+    .mobile-search-toggle { color: #f1f1f1; }
+    .mobile-search-toggle:hover { background-color: #3f3f3f; }
     .sidebar { background-color: #0f0f0f; border-right-color: #303030; }
     .sidebar-section-title { color: #aaaaaa; }
     .sidebar-item { color: #f1f1f1 !important; }
@@ -554,6 +810,8 @@
   body.dark-mode .voice-search-button { background-color: #272727; }
   body.dark-mode .voice-search-button:hover { background-color: #3f3f3f; }
   body.dark-mode .voice-search-button svg { fill: #f1f1f1; }
+  body.dark-mode .mobile-search-toggle { color: #f1f1f1; }
+  body.dark-mode .mobile-search-toggle:hover { background-color: #3f3f3f; }
   body.dark-mode .sidebar { background-color: #0f0f0f; border-right-color: #303030; }
   body.dark-mode .sidebar-section-title { color: #aaaaaa; }
   body.dark-mode .sidebar-item { color: #f1f1f1 !important; }
