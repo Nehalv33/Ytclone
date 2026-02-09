@@ -1,7 +1,5 @@
 export default function decorate(block) {
   // 1. CLEAR PARENT PADDING
-  // This is crucial for da.live/EDS. The parent '.section' often has default padding 
-  // that squeezes the banner. We remove it so the banner controls its own spacing.
   const parentSection = block.closest('.section');
   if (parentSection) {
     parentSection.style.padding = '0';
@@ -9,17 +7,43 @@ export default function decorate(block) {
     parentSection.style.margin = '0 auto';
   }
 
-  // 2. GET THE IMAGE
-  // Support both <picture> (responsive) and <img> (fallback)
+  // 2. EXTRACT CONTENT
+  // We scan the block for specific elements before we wipe the innerHTML
   const picture = block.querySelector('picture');
   const img = block.querySelector('img');
   
-  let imageHTML = '';
+  // Find Headings (H1-H6)
+  const heading = block.querySelector('h1, h2, h3, h4, h5, h6');
+  
+  // Find the Call to Action (Button)
+  // We look for a link. If it's inside a <strong> tag, it's a primary button.
+  const ctaLink = block.querySelector('a');
+  let ctaHTML = '';
+  if (ctaLink) {
+    ctaLink.classList.add('banner-btn');
+    // Check if it was bolded (strong wrapper)
+    if (ctaLink.closest('strong')) {
+      ctaLink.classList.add('btn-primary');
+    }
+    ctaHTML = ctaLink.outerHTML;
+  }
 
+  // Find Description 
+  // We look for paragraphs that don't contain the image or the button
+  const paragraphs = Array.from(block.querySelectorAll('p'));
+  let descHTML = '';
+  paragraphs.forEach((p) => {
+    // If this paragraph contains the picture or the button, skip it
+    if (p.querySelector('picture') || p.querySelector('img') || p.querySelector('a')) return;
+    descHTML += `<p>${p.innerHTML}</p>`;
+  });
+
+  // 3. PREPARE IMAGE HTML
+  let imageHTML = '';
   if (picture) {
     const imgTag = picture.querySelector('img');
     if (imgTag) {
-      imgTag.setAttribute('loading', 'eager'); // Load fast (LCP)
+      imgTag.setAttribute('loading', 'eager');
       imgTag.setAttribute('alt', 'Channel Banner');
     }
     imageHTML = picture.outerHTML;
@@ -28,17 +52,20 @@ export default function decorate(block) {
     img.setAttribute('alt', 'Channel Banner');
     imageHTML = img.outerHTML;
   } else {
-    // Fallback if no image is found
     imageHTML = '<div class="banner-placeholder"></div>';
   }
 
-  // 3. BUILD HTML
-  // We use 'banner-inner' to match the CSS padding rules
+  // 4. BUILD NEW HTML
   block.innerHTML = `
     <div class="banner-outer">
       <div class="banner-inner">
         <div class="banner-wrapper">
           ${imageHTML}
+          <div class="banner-content">
+            ${heading ? `<div class="banner-heading">${heading.innerHTML}</div>` : ''}
+            ${descHTML ? `<div class="banner-desc">${descHTML}</div>` : ''}
+            ${ctaHTML ? `<div class="banner-actions">${ctaHTML}</div>` : ''}
+          </div>
         </div>
       </div>
     </div>

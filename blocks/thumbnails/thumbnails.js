@@ -1,98 +1,77 @@
 export default function decorate(block) {
-  const rows = [...block.children];
   const videos = [];
+  const rows = [...block.children];
 
-  console.log('Thumbnails block - Total rows:', rows.length);
+  // Loop through every row in the table
+  rows.forEach((row) => {
+    const columns = [...row.children];
 
-  // Check if first row has multiple columns (table format)
-  const firstRow = rows[0];
-  const isTableFormat = firstRow && firstRow.children.length > 1;
+    // SKIP header rows or rows without enough data. 
+    // We now expect 4 columns based on your new layout.
+    if (columns.length < 4) return;
 
-  if (isTableFormat) {
-    console.log('Using table format');
-    
-    // Detect if we have 3-row groups or 4-row groups
-    const hasAvatarRow = rows[3]?.children[0]?.querySelector('picture, img') ? true : false;
-    const rowsPerGroup = hasAvatarRow ? 4 : 3;
-    
-    console.log('Rows per group:', rowsPerGroup);
-    console.log('Has custom avatars:', hasAvatarRow);
+    // 1. EXTRACT DATA
+    // Column 1: Thumbnail Image
+    const thumbnail = columns[0]?.querySelector('picture, img');
 
-    for (let rowIndex = 0; rowIndex < rows.length; rowIndex += rowsPerGroup) {
-      const imageRow = rows[rowIndex];
-      const titleRow = rows[rowIndex + 1];
-      const channelRow = rows[rowIndex + 2];
-      const avatarRow = hasAvatarRow ? rows[rowIndex + 3] : null;
+    // Column 2: Channel Avatar Image (Profile Picture)
+    const avatar = columns[1]?.querySelector('picture, img');
 
-      if (!imageRow || !titleRow || !channelRow) continue;
+    // Column 3: Video Title & Link
+    const titleDiv = columns[2];
+    const titleText = titleDiv?.textContent.trim() || 'Untitled Video';
+    // Check if the title was made into a link in the editor
+    const linkElement = titleDiv?.querySelector('a');
+    // Use the link's href if it exists, otherwise a default '#'
+    const link = linkElement ? linkElement.href : '#';
 
-      const columnCount = imageRow.children.length;
+    // Column 4: Channel Name
+    const channelName = columns[3]?.textContent.trim() || 'Channel';
 
-      for (let col = 0; col < columnCount; col++) {
-        const thumbnail = imageRow.children[col]?.querySelector('picture, img');
-        const title = titleRow.children[col]?.textContent?.trim() || 'Untitled Video';
-        const channel = channelRow.children[col]?.textContent?.trim() || 'Channel';
-        const avatar = avatarRow ? avatarRow.children[col]?.querySelector('picture, img') : null;
-        
-        const linkElement = titleRow.children[col]?.querySelector('a') || 
-                          channelRow.children[col]?.querySelector('a');
-        const link = linkElement?.href || '#';
-
-        if (thumbnail) {
-          videos.push({ thumbnail, title, channel, link, avatar });
-          console.log(`Added video ${videos.length}:`, title, avatar ? '(with avatar)' : '(auto avatar)');
-        }
-      }
+    // Only add the video if we have at least a main thumbnail image
+    if (thumbnail) {
+      videos.push({
+        thumbnail,
+        title: titleText,
+        link,
+        avatar, // This will be the image element or null
+        channel: channelName
+      });
     }
-  } else {
-    console.log('Using row format');
-    
-    const hasAvatar = rows[4]?.querySelector('picture, img') ? true : false;
-    const rowsPerVideo = hasAvatar ? 5 : 4;
+  });
 
-    for (let i = 0; i < rows.length; i += rowsPerVideo) {
-      const thumbnail = rows[i]?.querySelector('picture, img');
-      const title = rows[i + 1]?.textContent?.trim() || 'Untitled Video';
-      const channel = rows[i + 2]?.textContent?.trim() || 'Channel';
-      const linkElement = rows[i + 3]?.querySelector('a');
-      const link = linkElement?.href || '#';
-      const avatar = hasAvatar ? rows[i + 4]?.querySelector('picture, img') : null;
-
-      if (thumbnail) {
-        videos.push({ thumbnail, title, channel, link, avatar });
-      }
-    }
-  }
-
-  console.log('Total videos found:', videos.length);
-
-  // Generate thumbnail cards HTML
+  // 2. GENERATE HTML
   const thumbnailCards = videos.map((video, index) => {
-    const thumbnailHTML = video.thumbnail.tagName === 'PICTURE' 
-      ? video.thumbnail.outerHTML 
+    
+    // Prepare Thumbnail Image HTML
+    const thumbnailHTML = video.thumbnail.tagName === 'PICTURE'
+      ? video.thumbnail.outerHTML
       : `<img src="${video.thumbnail.src}" alt="${video.title}" loading="lazy">`;
 
-    // Avatar: Use custom image if provided, otherwise generate letter
-    let avatarHTML;
+    // Prepare Avatar HTML
+    let avatarHTML = '';
     if (video.avatar) {
-      avatarHTML = video.avatar.tagName === 'PICTURE'
-        ? video.avatar.outerHTML
-        : `<img src="${video.avatar.src}" alt="${video.channel}" class="avatar-image">`;
+      // CASE A: An avatar image was provided in Column 2. Use it.
+      avatarHTML = video.avatar.tagName === 'PICTURE' 
+        ? video.avatar.outerHTML 
+        : `<img src="${video.avatar.src}" alt="${video.channel}">`;
     } else {
-      const avatarLetter = video.channel.charAt(0).toUpperCase();
-      avatarHTML = `<span class="avatar-circle">${avatarLetter}</span>`;
+      // CASE B: No avatar image found. Fall back to the first letter.
+      const letter = video.channel.charAt(0).toUpperCase();
+      avatarHTML = `<span class="avatar-letter">${letter}</span>`;
     }
 
     return `
-      <a href="${video.link}" class="thumbnail-card" data-index="${index}">
+      <a href="${video.link}" class="thumbnail-card">
         <div class="thumbnail-image-wrapper">
           ${thumbnailHTML}
-        </div>
+          </div>
+        
         <div class="thumbnail-info">
           <div class="thumbnail-avatar">
             ${avatarHTML}
           </div>
-          <div class="thumbnail-details">
+          <div class="thumbnail-text">
             <h3 class="thumbnail-title">${video.title}</h3>
             <p class="thumbnail-channel">${video.channel}</p>
           </div>
@@ -101,7 +80,8 @@ export default function decorate(block) {
     `;
   }).join('');
 
-  // Replace block content
+  // 3. UPDATE PAGE
+  // Replace the original table with our new grid of cards
   block.innerHTML = `
     <div class="thumbnails-grid">
       ${thumbnailCards}
